@@ -72,6 +72,12 @@ final class Pharmacy {
 
     var openOrders: [RxOrder] { orders.filter { $0.status.isOpen } }
     var lowStock: [Medication] { medications.filter { $0.isLow } }
+
+    /// Takes the order's quantity out of stock when the label matches a shelf item.
+    func dispense(_ order: RxOrder) {
+        guard let med = medications.first(where: { $0.label.caseInsensitiveCompare(order.medicationName) == .orderedSame }) else { return }
+        med.stock = max(0, med.stock - order.quantity)
+    }
 }
 
 @Model

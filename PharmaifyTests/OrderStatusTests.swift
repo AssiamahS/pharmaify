@@ -68,3 +68,20 @@ final class OrderStatusTests: XCTestCase {
         XCTAssertFalse(mine.lowStock.isEmpty)
     }
 }
+
+final class DispenseTests: XCTestCase {
+    @MainActor
+    func testDispenseTakesQuantityOffMatchingShelfItem() throws {
+        let container = try ModelContainer(for: Pharmacy.self, Medication.self, RxOrder.self, OrderEvent.self, DoseReminder.self,
+                                           configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        let context = container.mainContext
+        let store = Pharmacy(name: "T", address: "", city: "", phone: "", hours: "", isMine: true)
+        context.insert(store)
+        let med = Medication(name: "Metformin", strength: "500 mg", form: "tablet", price: 1, stock: 50, pharmacy: store)
+        context.insert(med)
+        store.dispense(RxOrder(customerName: "a", customerPhone: "1", medicationName: "metformin 500 mg", quantity: 60))
+        XCTAssertEqual(med.stock, 0, "stock clamps at zero")
+        store.dispense(RxOrder(customerName: "a", customerPhone: "1", medicationName: "Unknown", quantity: 5))
+        XCTAssertEqual(med.stock, 0)
+    }
+}
